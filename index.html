@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#047857">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>TPQ Tracker</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+body{font-family:'Segoe UI',sans-serif;margin:0}
+.nav-active{color:#047857}
+.nav-active svg{stroke:#047857}
+.page{display:none}
+.page.active{display:block;animation:fade .25s ease}
+@keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+select,input,textarea{font-size:16px}
+</style>
+</head>
+<body class="bg-slate-100 min-h-screen">
+<div class="max-w-md mx-auto bg-slate-50 min-h-screen shadow-xl pb-24">
+
+<div class="bg-emerald-700 text-white px-4 pt-6 pb-8 rounded-b-3xl">
+  <p class="text-emerald-100 text-sm">Assalamu'alaikum,</p>
+  <h1 class="text-xl font-bold" id="namaLembaga">TPQ Tracker</h1>
+</div>
+
+<!-- DASHBOARD -->
+<div id="page-dashboard" class="page active px-4 -mt-5">
+  <div class="grid grid-cols-3 gap-2 mb-4">
+    <div class="bg-white rounded-xl p-3 text-center shadow"><p class="text-2xl font-bold text-emerald-700" id="statTotal">0</p><p class="text-[11px] text-slate-500">Total Murid</p></div>
+    <div class="bg-white rounded-xl p-3 text-center shadow"><p class="text-2xl font-bold text-amber-500" id="statPerhatian">0</p><p class="text-[11px] text-slate-500">Perlu Perhatian</p></div>
+    <div class="bg-white rounded-xl p-3 text-center shadow"><p class="text-2xl font-bold text-sky-600" id="statHadir">0%</p><p class="text-[11px] text-slate-500">Hadir Hari Ini</p></div>
+  </div>
+  <h2 class="font-bold text-slate-700 mb-2">⚠️ Perlu Perhatian</h2>
+  <div id="listPerhatian" class="space-y-2 mb-5"></div>
+  <h2 class="font-bold text-slate-700 mb-2">📋 Daftar Murid</h2>
+  <div id="listMuridDashboard" class="space-y-2"></div>
+</div>
+
+<!-- ABSENSI -->
+<div id="page-absensi" class="page px-4 pt-4">
+  <h2 class="font-bold text-lg text-slate-700 mb-1">📅 Absensi</h2>
+  <p class="text-sm text-slate-500 mb-3" id="tanggalHariIni"></p>
+  <div class="flex gap-2 mb-3" id="tabAbsen"></div>
+  <p class="text-xs text-slate-400 mb-2">Tap nama untuk ganti: H → I → S → A (tersimpan otomatis)</p>
+  <div id="listAbsensi" class="space-y-2"></div>
+</div>
+
+<!-- MURID -->
+<div id="page-murid" class="page px-4 pt-4">
+  <h2 class="font-bold text-lg text-slate-700 mb-3">👦 Profil Murid</h2>
+  <select id="pilihMurid" onchange="tampilkanProfil()" class="w-full p-3 rounded-xl border mb-4 bg-white"></select>
+  <div id="profilBox" class="hidden">
+    <div class="bg-white rounded-2xl p-4 shadow mb-4">
+      <div class="flex items-center gap-3 mb-3">
+        <div class="w-14 h-14 bg-emerald-100 rounded-full flex items-center justify-center text-xl font-bold text-emerald-700" id="avatarMurid"></div>
+        <div><p class="font-bold text-slate-800" id="namaProfil"></p><p class="text-sm text-slate-500" id="infoProfil"></p></div>
+      </div>
+      <div class="bg-slate-50 rounded-xl p-3 text-sm">
+        <p class="flex justify-between"><span class="text-slate-500">Tahap</span><span class="font-semibold" id="tahapProfil"></span></p>
+        <p class="flex justify-between mt-1"><span class="text-slate-500">Posisi</span><span class="font-semibold" id="posisiProfil"></span></p>
+        <div class="w-full bg-slate-200 rounded-full h-2 mt-2"><div id="progressBar" class="bg-emerald-600 h-2 rounded-full" style="width:0%"></div></div>
+      </div>
+      <button onclick="hapusMurid()" class="mt-3 text-xs text-red-500">Hapus murid ini</button>
+    </div>
+    <div class="bg-white rounded-2xl p-4 shadow mb-4">
+      <p class="font-semibold text-slate-700 mb-2">📊 Analisis (3 penilaian terakhir)</p>
+
+<canvas id="chartNilai" height="200"></canvas>
+      <div id="labelKekurangan" class="mt-3 space-y-1 text-sm"></div>
+    </div>
+    <div class="bg-white rounded-2xl p-4 shadow mb-4">
+      <p class="font-semibold text-slate-700 mb-3">✍️ Input Penilaian</p>
+      <label class="text-xs text-slate-500">Halaman</label>
+      <input type="number" id="inputHalaman" class="w-full p-2.5 rounded-lg border mb-3" placeholder="Contoh: 23">
+      <div id="inputAspek" class="space-y-3 mb-3"></div>
+      <label class="text-xs text-slate-500">Status</label>
+      <select id="inputStatus" class="w-full p-2.5 rounded-lg border mb-3"><option value="lanjut">Lanjut</option><option value="ulang">Ulang</option></select>
+      <label class="text-xs text-slate-500">Catatan</label>
+      <textarea id="inputCatatan" class="w-full p-2.5 rounded-lg border mb-3" rows="2"></textarea>
+      <button onclick="simpanPenilaian()" class="w-full bg-emerald-700 text-white font-semibold py-3 rounded-xl">💾 Simpan</button>
+    </div>
+    <div class="bg-white rounded-2xl p-4 shadow mb-4">
+      <p class="font-semibold text-slate-700 mb-2">🕒 Riwayat</p>
+      <div id="riwayat" class="space-y-2 text-sm"></div>
+    </div>
+  </div>
+  <div class="bg-white rounded-2xl p-4 shadow mb-4">
+    <p class="font-semibold text-slate-700 mb-3">➕ Tambah Murid</p>
+    <input id="mNama" placeholder="Nama murid" class="w-full p-2.5 rounded-lg border mb-2">
+    <select id="mKelas" class="w-full p-2.5 rounded-lg border mb-2"><option value="banin">Banin</option><option value="banat">Banat</option><option value="privat">Privat</option></select>
+    <select id="mTahap" class="w-full p-2.5 rounded-lg border mb-3"></select>
+    <button onclick="tambahMurid()" class="w-full bg-emerald-700 text-white py-2.5 rounded-lg text-sm">+ Tambah</button>
+  </div>
+</div>
+
+<!-- HAFALAN -->
+<div id="page-hafalan" class="page px-4 pt-4">
+  <h2 class="font-bold text-lg text-slate-700 mb-3">📖 Hafalan</h2>
+  <select id="pilihMuridHafalan" onchange="tampilkanHafalan()" class="w-full p-3 rounded-xl border mb-4 bg-white"></select>
+  <div id="hafalanBox" class="hidden space-y-4">
+    <div class="bg-white rounded-2xl p-4 shadow"><p class="font-semibold text-slate-700 mb-2">📿 Qur'an</p><div id="listQuran" class="space-y-2 text-sm"></div></div>
+    <div class="bg-white rounded-2xl p-4 shadow"><p class="font-semibold text-slate-700 mb-2">🤲 Doa</p><div id="listDoa" class="space-y-2 text-sm"></div></div>
+    <div class="bg-white rounded-2xl p-4 shadow"><p class="font-semibold text-slate-700 mb-2">📜 Hadits</p><div id="listHadits" class="space-y-2 text-sm"></div></div>
+  </div>
+</div>
+
+<!-- ADMIN -->
+<div id="page-admin" class="page px-4 pt-4">
+  <h2 class="font-bold text-lg text-slate-700 mb-3">⚙️ Pengaturan (Admin)</h2>
+  <div class="bg-white rounded-2xl p-4 shadow mb-4">
+    <p class="font-semibold text-slate-700 mb-3">🏫 Nama Lembaga</p>
+    <input id="inputLembaga" placeholder="Contoh: TPQ Al-Hidayah" class="w-full p-2.5 rounded-lg border mb-2">
+    <button onclick="simpanLembaga()" class="w-full bg-emerald-700 text-white py-2 rounded-lg text-sm">💾 Simpan Nama</button>
+  </div>
+  <div class="bg-white rounded-2xl p-4 shadow mb-4">
+    <p class="font-semibold text-slate-700 mb-3">📘 Kelola Bab</p>
+    <select id="pilihKitab" onchange="tampilkanBab()" class="w-full p-2.5 rounded-lg border mb-3">
+      <option value="faturrahman">Faturrahman (84 hal.)</option>
+      <option value="albayan_lanjutan">Al Bayan Lanjutan</option>
+    </select>
+    <div id="listBab" class="space-y-2 mb-3"></div>
+    <input id="babNama" placeholder="Nama bab" class="w-full p-2 rounded-lg border mb-2 text-sm">
+    <div class="grid grid-cols-2 gap-2 mb-2">
+      <input id="babAwal" type="number" placeholder="Hal awal" class="p-2 rounded-lg border text-sm">
+
+<input id="babAkhir" type="number" placeholder="Hal akhir" class="p-2 rounded-lg border text-sm">
+    </div>
+    <button onclick="tambahBab()" class="w-full bg-emerald-700 text-white py-2 rounded-lg text-sm">+ Tambah Bab</button>
+  </div>
+  <div class="bg-white rounded-2xl p-4 shadow mb-4">
+    <p class="font-semibold text-slate-700 mb-3">📝 Materi Hafalan</p>
+    <select id="jenisMateri" class="w-full p-2.5 rounded-lg border mb-2">
+      <option value="quran">Qur'an</option><option value="doa">Doa</option><option value="hadits">Hadits</option>
+    </select>
+    <input id="materiBaru" placeholder="Nama materi" class="w-full p-2.5 rounded-lg border mb-2">
+    <button onclick="tambahMateri()" class="w-full bg-emerald-700 text-white py-2 rounded-lg text-sm">+ Tambah</button>
+    <div id="listMateri" class="mt-3 space-y-1 text-sm"></div>
+  </div>
+  <button onclick="resetData()" class="text-xs text-red-500 mb-4">Reset semua data</button>
+</div>
+
+</div>
+
+<!-- NAV -->
+<div class="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-white border-t flex justify-around py-2 shadow-2xl" id="nav"></div>
+
+<script src="app.js"></script>
+</body>
+</html>
